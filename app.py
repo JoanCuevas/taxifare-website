@@ -47,6 +47,23 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# API Key for OpenCage
+GEOCODING_API_KEY = "8aaa2202ee7c459589f3ae3fc8aaa8e9"
+
+# Function to get coordinates from a location name
+def get_coordinates(location):
+    geocoding_url = f"https://api.opencagedata.com/geocode/v1/json?q={location}&key={GEOCODING_API_KEY}"
+    response = requests.get(geocoding_url)
+    if response.status_code == 200:
+        data = response.json()
+        if data["results"]:
+            coords = data["results"][0]["geometry"]
+            return coords["lat"], coords["lng"]
+        else:
+            return None, None
+    else:
+        return None, None
+
 # Title and description
 st.title("🚖 NYC Taxi Fare Prediction")
 st.markdown(
@@ -63,76 +80,61 @@ with st.container():
         "Pickup Date and Time (YYYY-MM-DD HH:MM:SS)",
         placeholder="e.g., 2014-07-06 17:18:00"
     )
-    col1, col2 = st.columns(2)
-    with col1:
-        pickup_longitude = st.number_input(
-            "Pickup Longitude", value=-73.950655, format="%.6f"
-        )
-        dropoff_longitude = st.number_input(
-            "Dropoff Longitude", value=-73.984365, format="%.6f"
-        )
-    with col2:
-        pickup_latitude = st.number_input(
-            "Pickup Latitude", value=40.783282, format="%.6f"
-        )
-        dropoff_latitude = st.number_input(
-            "Dropoff Latitude", value=40.769802, format="%.6f"
-        )
+    pickup_location = st.text_input("Pickup Location (e.g., Empire State Building)")
+    dropoff_location = st.text_input("Dropoff Location (e.g., Times Square)")
     passenger_count = st.slider(
         "Passenger Count", min_value=1, max_value=8, value=1
     )
 
 # Button for prediction
 if st.button("Predict Fare"):
-    with st.spinner("Contacting the API..."):
-        API_URL = "https://taxifare-api-30800092330.europe-west1.run.app/predict"
-        params = {
-            "pickup_datetime": pickup_datetime,
-            "pickup_longitude": pickup_longitude,
-            "pickup_latitude": pickup_latitude,
-            "dropoff_longitude": dropoff_longitude,
-            "dropoff_latitude": dropoff_latitude,
-            "passenger_count": passenger_count,
-        }
+    with st.spinner("Geocoding locations and contacting the API..."):
+        # Get coordinates for pickup and dropoff locations
+        pickup_lat, pickup_lon = get_coordinates(pickup_location)
+        dropoff_lat, dropoff_lon = get_coordinates(dropoff_location)
 
-        # Display the parameters being sent
-        st.write("🔍 Parameters sent to the API:", params)
+        if not pickup_lat or not dropoff_lat:
+            st.error("Unable to geocode one or both locations. Please check the addresses.")
+        else:
+            API_URL = "https://taxifare.lewagon.ai/predict"
+            params = {
+                "pickup_datetime": pickup_datetime,
+                "pickup_longitude": pickup_lon,
+                "pickup_latitude": pickup_lat,
+                "dropoff_longitude": dropoff_lon,
+                "dropoff_latitude": dropoff_lat,
+                "passenger_count": passenger_count,
+            }
 
-        try:
-            # API call
-            response = requests.get(API_URL, params=params)
-            if response.status_code == 200:
-                prediction = response.json()
-                fare = prediction["fare"]
+            try:
+                # API call
+                response = requests.get(API_URL, params=params)
+                if response.status_code == 200:
+                    prediction = response.json()
+                    fare = prediction["fare"]
 
-                # Display the fare prediction
-                st.success(f"💰 Estimated Fare: **${fare:.2f}**")
-
-                # Warning if passenger count doesn't affect fare
-                if passenger_count > 1 and fare == 12.49:
-                    st.warning(
-                        "The fare remains constant regardless of the passenger count. "
-                        "This may be a limitation of the prediction model."
-                    )
-            else:
-                st.error(f"Error {response.status_code}: Unable to get prediction.")
-        except Exception as e:
-            st.error(f"An error occurred: {e}")
+                    # Display the fare prediction
+                    st.success(f"💰 Estimated Fare: **${fare:.2f}**")
+                else:
+                    st.error(f"Error {response.status_code}: Unable to get prediction.")
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
 
 # Map section
-st.subheader("📍 Pickup and Dropoff Map")
-map_data = pd.DataFrame({
-    "lat": [pickup_latitude, dropoff_latitude],
-    "lon": [pickup_longitude, dropoff_longitude]
-})
-st.map(map_data)
+if st.button("Show Map"):
+    st.subheader("📍 Pickup and Dropoff Map")
+    map_data = pd.DataFrame({
+        "lat": [pickup_lat, dropoff_lat],
+        "lon": [pickup_lon, dropoff_lon]
+    })
+    st.map(map_data)
 
 # Footer
 st.markdown(
     """
     ---
     <div class="footer">
-        *Built with ❤️ by [JoanCuevas](https://github.com/JoanCuevas)*
+        *Built with ❤️ by [JoanCuevas](https://github.com/JoanCuevas)*<br>
         Powered by **Streamlit** and the NYC Taxi Dataset.
     </div>
     """,
