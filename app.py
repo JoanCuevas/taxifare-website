@@ -14,12 +14,20 @@ st.set_page_config(
 GEOCODING_API_KEY = "8aaa2202ee7c459589f3ae3fc8aaa8e9"  # Reemplaza con tu clave de OpenCage
 ROUTING_API_KEY = "5b8e999f-4a9c-447c-a276-00338fe825e7"  # Reemplaza con tu clave de GraphHopper
 
+# Inicializar el estado para la ruta
+if "route_coords" not in st.session_state:
+    st.session_state["route_coords"] = None
+if "pickup" not in st.session_state:
+    st.session_state["pickup"] = None
+if "dropoff" not in st.session_state:
+    st.session_state["dropoff"] = None
+
 # Función para obtener coordenadas de OpenCage
 def get_coordinates(location):
     try:
         geocoding_url = f"https://api.opencagedata.com/geocode/v1/json?q={location}&key={GEOCODING_API_KEY}"
         response = requests.get(geocoding_url)
-        response.raise_for_status()  # Detecta errores en la solicitud
+        response.raise_for_status()
         data = response.json()
         if data["results"]:
             coords = data["results"][0]["geometry"]
@@ -37,7 +45,7 @@ def get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon):
             f"&profile=car&locale=en&calc_points=true&points_encoded=false&key={ROUTING_API_KEY}"
         )
         response = requests.get(routing_url)
-        response.raise_for_status()  # Detecta errores en la solicitud
+        response.raise_for_status()
         data = response.json()
         if "paths" in data and data["paths"]:
             route_coords = data["paths"][0]["points"]["coordinates"]
@@ -80,50 +88,31 @@ if st.button("Calcular tarifa"):
         if not pickup_lat or not dropoff_lat:
             st.error("No se pudo obtener las coordenadas de una o ambas ubicaciones. Revisa las direcciones.")
         else:
+            # Guardar coordenadas en sesión
+            st.session_state["pickup"] = (pickup_lat, pickup_lon)
+            st.session_state["dropoff"] = (dropoff_lat, dropoff_lon)
+
             # Obtener ruta
             route_coords = get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon)
-
-            if not route_coords:
-                st.error("No se pudo obtener la ruta. Por favor, inténtalo de nuevo.")
+            if route_coords:
+                st.session_state["route_coords"] = route_coords
             else:
-                # Dibujar ruta y marcadores en el mapa
-                folium.PolyLine(route_coords, color="blue", weight=5, opacity=0.7).add_to(route_map)
-                folium.Marker(location=(pickup_lat, pickup_lon), popup="Recogida", icon=folium.Icon(color="green")).add_to(route_map)
-                folium.Marker(location=(dropoff_lat, dropoff_lon), popup="Destino", icon=folium.Icon(color="red")).add_to(route_map)
+                st.error("No se pudo obtener la ruta. Por favor, inténtalo de nuevo.")
 
-                # Llamada a la API de predicción
-                API_URL = "https://taxifare.lewagon.ai/predict"
-                params = {
-                    "pickup_datetime": pickup_datetime,
-                    "pickup_longitude": pickup_lon,
-                    "pickup_latitude": pickup_lat,
-                    "dropoff_longitude": dropoff_lon,
-                    "dropoff_latitude": dropoff_lat,
-                    "passenger_count": passenger_count,
-                }
+# Si hay una ruta almacenada en sesión, dibujarla en el mapa
+if st.session_state["route_coords"]:
+    route_coords = st.session_state["route_coords"]
+    folium.PolyLine(route_coords, color="blue", weight=5, opacity=0.7).add_to(route_map)
 
-                try:
-                    response = requests.get(API_URL, params=params)
-                    response.raise_for_status()  # Detecta errores en la solicitud
-                    prediction = response.json()
-                    fare = prediction.get("fare", None)
-
-                    if fare is not None:
-                        st.success(f"💰 Tarifa estimada: **${fare:.2f}**")
-                    else:
-                        st.error("No se pudo obtener la predicción.")
-                except Exception as e:
-                    st.error(f"Error al predecir la tarifa: {e}")
+    # Agregar marcadores de recogida y destino
+    if st.session_state["pickup"]:
+        folium.Marker(
+            location=st.session_state["pickup"], popup="Recogida", icon=folium.Icon(color="green")
+        ).add_to(route_map)
+    if st.session_state["dropoff"]:
+        folium.Marker(
+            location=st.session_state["dropoff"], popup="Destino", icon=folium.Icon(color="red")
+        ).add_to(route_map)
 
 # Mostrar el mapa
 st_folium(route_map, width=700, height=500)
-
-# Pie de página
-st.markdown(
-    """
-    ---
-    **Desarrollado con ❤️ por JoanCuevas**<br>
-    Potenciado por **Streamlit**, GraphHopper y el Dataset de NYC Taxi.
-    """,
-    unsafe_allow_html=True
-)
