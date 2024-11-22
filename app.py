@@ -47,36 +47,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Mostrar mapa inicial
-st.subheader("📍 NYC Map Preview")
-initial_map_data = pd.DataFrame({
-    "lat": [40.7831],  # Manhattan central latitude
-    "lon": [-73.9712]  # Manhattan central longitude
-})
-st.map(initial_map_data, zoom=12)
-
-# Title and description
-st.title("🚖 NYC Taxi Fare Prediction")
-st.markdown(
-    """
-    Enter the ride details below and get an instant fare estimate!
-    Powered by **Machine Learning** and the NYC Taxi Dataset.
-    """
-)
-
-# Input fields for ride details
-with st.container():
-    st.subheader("🚕 Ride Details")
-    pickup_datetime = st.text_input(
-        "Pickup Date and Time (YYYY-MM-DD HH:MM:SS)",
-        placeholder="e.g., 2014-07-06 17:18:00"
-    )
-    pickup_location = st.text_input("Pickup Location (e.g., Empire State Building)")
-    dropoff_location = st.text_input("Dropoff Location (e.g., Times Square)")
-    passenger_count = st.slider(
-        "Passenger Count", min_value=1, max_value=8, value=1
-    )
-
 # API Key for OpenCage
 GEOCODING_API_KEY = "8aaa2202ee7c459589f3ae3fc8aaa8e9"
 
@@ -93,6 +63,33 @@ def get_coordinates(location):
             return None, None
     else:
         return None, None
+
+# Title and description
+st.title("🚖 NYC Taxi Fare Prediction")
+st.markdown(
+    """
+    Enter the ride details below and get an instant fare estimate!
+    Powered by **Machine Learning** and the NYC Taxi Dataset.
+    """
+)
+
+# Input fields for ride details
+pickup_datetime = st.text_input(
+    "Pickup Date and Time (YYYY-MM-DD HH:MM:SS)",
+    placeholder="e.g., 2014-07-06 17:18:00"
+)
+pickup_location = st.text_input("Pickup Location (e.g., Empire State Building)")
+dropoff_location = st.text_input("Dropoff Location (e.g., Times Square)")
+passenger_count = st.slider(
+    "Passenger Count", min_value=1, max_value=8, value=1
+)
+
+# Initialize map data with Manhattan center
+map_data = pd.DataFrame({
+    "lat": [40.7831],  # Manhattan central latitude
+    "lon": [-73.9712]  # Manhattan central longitude
+})
+map_placeholder = st.map(map_data, zoom=12)
 
 # Button for prediction
 if st.button("Predict Fare"):
@@ -125,12 +122,11 @@ if st.button("Predict Fare"):
                     st.success(f"💰 Estimated Fare: **${fare:.2f}**")
 
                     # Update the map with pickup and dropoff points
-                    st.subheader("📍 Updated Pickup and Dropoff Map")
-                    map_data = pd.DataFrame({
+                    updated_map_data = pd.DataFrame({
                         "lat": [pickup_lat, dropoff_lat],
                         "lon": [pickup_lon, dropoff_lon]
                     })
-                    st.map(map_data, zoom=12)
+                    map_placeholder = st.map(updated_map_data, zoom=12)
                 else:
                     st.error(f"Error {response.status_code}: Unable to get prediction.")
             except Exception as e:
