@@ -120,7 +120,7 @@ if st.button("Predict Fare"):
                         "lon": [pickup_lon, dropoff_lon]
                     })
                     # Render the updated map in the placeholder
-                    map_placeholder.map(updated_map_data, zoom=12)
+                    placeholder.map(updated_map_data, zoom=12)
                 else:
                     st.error(f"Error {response.status_code}: Unable to get prediction.")
             except Exception as e:
@@ -133,7 +133,7 @@ initial_map_data = pd.DataFrame({
     "lat": [40.7831],
     "lon": [-73.9712]
 })
-map_placeholder.map(initial_map_data, zoom=12)
+placeholder.map(initial_map_data, zoom=12)
 
 # Footer
 st.markdown(
