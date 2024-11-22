@@ -120,14 +120,16 @@ if st.button("Predict Fare"):
             except Exception as e:
                 st.error(f"An error occurred: {e}")
 
-# Map section
-if st.button("Show Map"):
+# Mostrar el mapa solo si las coordenadas son válidas
+if 'pickup_lat' in locals() and 'dropoff_lat' in locals() and pickup_lat and dropoff_lat:
     st.subheader("📍 Pickup and Dropoff Map")
     map_data = pd.DataFrame({
         "lat": [pickup_lat, dropoff_lat],
         "lon": [pickup_lon, dropoff_lon]
     })
     st.map(map_data)
+else:
+    st.warning("Please enter valid locations and predict the fare before displaying the map.")
 
 # Footer
 st.markdown(
