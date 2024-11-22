@@ -41,14 +41,17 @@ def get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon):
     try:
         routing_url = (
             f"https://graphhopper.com/api/1/route?point={pickup_lat},{pickup_lon}"
-            f"&point={dropoff_lat},{dropoff_lon}&vehicle=car&locale=en"
-            f"&calc_points=true&points_encoded=false&key={ROUTING_API_KEY}"
+            f"&point={dropoff_lat},{dropoff_lon}"
+            f"&profile=car&locale=en&calc_points=true"
+            f"&points_encoded=false&instructions=true&snap_preventions=motorway"
+            f"&key={ROUTING_API_KEY}"
         )
         response = requests.get(routing_url)
         response.raise_for_status()
         data = response.json()
         if "paths" in data and data["paths"]:
-            route_coords = data["paths"][0]["points"]["coordinates"]
+            path = data["paths"][0]
+            route_coords = path["points"]["coordinates"]
             return [(coord[1], coord[0]) for coord in route_coords]  # (lat, lon)
     except Exception as e:
         st.error(f"Error obteniendo la ruta: {e}")
