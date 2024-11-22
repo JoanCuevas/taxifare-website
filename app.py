@@ -49,7 +49,7 @@ def get_coordinates(location):
 # Función para obtener rutas de GraphHopper con modelo personalizado
 def get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon):
     try:
-        routing_url = "https://graphhopper.com/api/1/route"
+        routing_url = f"https://graphhopper.com/api/1/route?key={ROUTING_API_KEY}"
         payload = {
             "points": [[pickup_lat, pickup_lon], [dropoff_lat, dropoff_lon]],
             "profile": "car",
@@ -58,10 +58,7 @@ def get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon):
             "calc_points": True,
             "points_encoded": False
         }
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"key {ROUTING_API_KEY}"
-        }
+        headers = {"Content-Type": "application/json"}
         response = requests.post(routing_url, json=payload, headers=headers)
         response.raise_for_status()
         data = response.json()
