@@ -73,6 +73,16 @@ st.markdown(
     """
 )
 
+# Initialize map placeholder
+map_placeholder = st.empty()
+
+# Display initial map centered in Manhattan
+initial_map_data = pd.DataFrame({
+    "lat": [40.7831],
+    "lon": [-73.9712]
+})
+map_placeholder.map(initial_map_data, zoom=12)
+
 # Input fields for ride details
 pickup_datetime = st.text_input(
     "Pickup Date and Time (YYYY-MM-DD HH:MM:SS)",
@@ -83,13 +93,6 @@ dropoff_location = st.text_input("Dropoff Location (e.g., Times Square)")
 passenger_count = st.slider(
     "Passenger Count", min_value=1, max_value=8, value=1
 )
-
-# Initialize map data with Manhattan center
-map_data = pd.DataFrame({
-    "lat": [40.7831],  # Manhattan central latitude
-    "lon": [-73.9712]  # Manhattan central longitude
-})
-map_placeholder = st.map(map_data, zoom=12)
 
 # Button for prediction
 if st.button("Predict Fare"):
@@ -126,7 +129,7 @@ if st.button("Predict Fare"):
                         "lat": [pickup_lat, dropoff_lat],
                         "lon": [pickup_lon, dropoff_lon]
                     })
-                    map_placeholder = st.map(updated_map_data, zoom=12)
+                    map_placeholder.map(updated_map_data, zoom=12)
                 else:
                     st.error(f"Error {response.status_code}: Unable to get prediction.")
             except Exception as e:
