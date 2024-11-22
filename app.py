@@ -76,7 +76,7 @@ passenger_count = st.slider("Passenger Count", min_value=1, max_value=8, value=1
 
 # Configurar el mapa
 map_center = (40.7831, -73.9712,)  # Manhattan center
-route_map = folium.Map(location=map_center, zoom_start=12,  tiles='cartodbpositron')
+route_map = folium.Map(location=map_center, zoom_start=12,  tiles='stamendesign')
 
 # Predicción y cálculo de ruta
 if st.button("Calculate Fare"):
