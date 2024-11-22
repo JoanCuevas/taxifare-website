@@ -40,9 +40,9 @@ def get_coordinates(location):
 def get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon):
     try:
         routing_url = (
-            f"https://graphhopper.com/api/1/route?"
-            f"point={pickup_lat},{pickup_lon}&point={dropoff_lat},{dropoff_lon}"
-            f"&profile=car&locale=en&calc_points=true&points_encoded=false&key={ROUTING_API_KEY}"
+            f"https://graphhopper.com/api/1/route?point={pickup_lat},{pickup_lon}"
+            f"&point={dropoff_lat},{dropoff_lon}&vehicle=car&locale=en"
+            f"&calc_points=true&points_encoded=false&key={ROUTING_API_KEY}"
         )
         response = requests.get(routing_url)
         response.raise_for_status()
