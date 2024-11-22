@@ -85,7 +85,7 @@ with st.container():
 # Button for prediction
 if st.button("Predict Fare"):
     with st.spinner("Contacting the API..."):
-        API_URL = "https://taxifare.lewagon.ai/predict"
+        API_URL = "https://taxifare-api-30800092330.europe-west1.run.app/predict"
         params = {
             "pickup_datetime": pickup_datetime,
             "pickup_longitude": pickup_longitude,
