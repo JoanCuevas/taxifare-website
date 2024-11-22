@@ -15,13 +15,15 @@ st.set_page_config(
 GEOCODING_API_KEY = "8aaa2202ee7c459589f3ae3fc8aaa8e9"  # Replace with your OpenCage API key
 ROUTING_API_KEY = "5b8e999f-4a9c-447c-a276-00338fe825e7"  # Replace with your GraphHopper API key
 
-# Inicializar el estado para la ruta
+# Inicializar estados
 if "route_coords" not in st.session_state:
     st.session_state["route_coords"] = None
 if "pickup" not in st.session_state:
     st.session_state["pickup"] = None
 if "dropoff" not in st.session_state:
     st.session_state["dropoff"] = None
+if "calculated_fare" not in st.session_state:
+    st.session_state["calculated_fare"] = None  # Almacenar la tarifa calculada
 
 # Función para obtener coordenadas de OpenCage
 def get_coordinates(location):
@@ -110,6 +112,7 @@ if st.button("Calculate Fare"):
                     if response.status_code == 200:
                         prediction = response.json()
                         fare = prediction.get("fare", "N/A")
+                        st.session_state["calculated_fare"] = fare  # Guardar en sesión
                         st.success(f"💰 Estimated Fare: **${fare:.2f}**")
                     else:
                         st.error("Error fetching fare prediction.")
@@ -117,6 +120,10 @@ if st.button("Calculate Fare"):
                     st.error(f"Error: {e}")
             else:
                 st.error("Unable to fetch route. Please try again.")
+
+# Mostrar la tarifa calculada si está almacenada en la sesión
+if st.session_state["calculated_fare"] is not None:
+    st.success(f"💰 Estimated Fare: **${st.session_state['calculated_fare']:.2f}**")
 
 # Si hay una ruta almacenada en sesión, dibujarla en el mapa
 if st.session_state["route_coords"]:
