@@ -73,6 +73,16 @@ st.markdown(
     """
 )
 
+# Initialize map placeholder
+map_placeholder = st.empty()
+
+# Display initial map centered in Manhattan
+initial_map_data = pd.DataFrame({
+    "lat": [40.7831],
+    "lon": [-73.9712]
+})
+map_placeholder.map(initial_map_data, zoom=12)
+
 # Input fields for ride details
 pickup_datetime = st.text_input(
     "Pickup Date and Time (YYYY-MM-DD HH:MM:SS)",
@@ -119,21 +129,11 @@ if st.button("Predict Fare"):
                         "lat": [pickup_lat, dropoff_lat],
                         "lon": [pickup_lon, dropoff_lon]
                     })
-                    # Render the updated map in the placeholder
-                    placeholder.map(updated_map_data, zoom=12)
+                    map_placeholder.map(updated_map_data, zoom=12)
                 else:
                     st.error(f"Error {response.status_code}: Unable to get prediction.")
             except Exception as e:
                 st.error(f"An error occurred: {e}")
-
-# Initialize map placeholder at the bottom
-st.subheader("📍 Pickup and Dropoff Map")
-map_placeholder = st.empty()
-initial_map_data = pd.DataFrame({
-    "lat": [40.7831],
-    "lon": [-73.9712]
-})
-placeholder.map(initial_map_data, zoom=12)
 
 # Footer
 st.markdown(
