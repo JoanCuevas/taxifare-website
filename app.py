@@ -22,6 +22,16 @@ if "pickup" not in st.session_state:
 if "dropoff" not in st.session_state:
     st.session_state["dropoff"] = None
 
+# Modelo personalizado para GraphHopper
+CUSTOM_MODEL = {
+    "priority": [
+        {"if": "road_class == MOTORWAY", "multiply_by": 0.7},
+        {"if": "road_environment == TUNNEL", "multiply_by": 0.5},
+        {"if": "road_class_link", "multiply_by": 0.8}
+    ],
+    "distance_influence": 100
+}
+
 # Función para obtener coordenadas de OpenCage
 def get_coordinates(location):
     try:
@@ -36,15 +46,20 @@ def get_coordinates(location):
         st.error(f"Error geocodificando '{location}': {e}")
     return None, None
 
-# Función para obtener rutas de GraphHopper
+# Función para obtener rutas de GraphHopper con modelo personalizado
 def get_route(pickup_lat, pickup_lon, dropoff_lat, dropoff_lon):
     try:
-        routing_url = (
-            f"https://graphhopper.com/api/1/route?"
-            f"point={pickup_lat},{pickup_lon}&point={dropoff_lat},{dropoff_lon}"
-            f"&profile=car&locale=en&calc_points=true&points_encoded=false&key={ROUTING_API_KEY}"
-        )
-        response = requests.get(routing_url)
+        routing_url = f"https://graphhopper.com/api/1/route?key={ROUTING_API_KEY}"
+        payload = {
+            "points": [[pickup_lon, pickup_lat], [dropoff_lon, dropoff_lat]],
+            "profile": "car",
+            "custom_model": CUSTOM_MODEL,
+            "locale": "en",
+            "calc_points": True,
+            "points_encoded": False
+        }
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(routing_url, json=payload, headers=headers)
         response.raise_for_status()
         data = response.json()
         if "paths" in data and data["paths"]:
